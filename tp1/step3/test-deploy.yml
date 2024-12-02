@@ -1,0 +1,24 @@
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-deployment 
+  labels:
+    app: test 
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: test 
+  strategy:
+    type: Recreate 
+  template:
+    metadata:
+      labels:
+        app: test 
+    spec:
+      containers:
+      - name: test 
+        image: registry.takima.io/school/proxy/nginx:1.7.9
+        ports:
+        - containerPort: 80

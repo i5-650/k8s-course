@@ -1,0 +1,18 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: hello-daemonset
+  labels:
+    app: hella
+spec:
+  selector:
+    matchLabels:
+      app: hella
+  template:
+    metadata:
+      labels:
+        app: hella
+    spec:
+      containers:
+      - name: hella
+        image: registry.takima.io/school/proxy/nginx:1.7.9

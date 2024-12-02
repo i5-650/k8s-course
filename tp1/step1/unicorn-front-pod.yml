@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    run: unicorn-front-pod 
+  name: unicorn-front-pod 
+spec:
+  containers:
+  - image: registry.takima.io/school/proxy/nginx
+    name: mynginx2
+    resources: {}
+  dnsPolicy: ClusterFirst
+  restartPolicy: Always
+status: {}
