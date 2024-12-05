@@ -1,0 +1,8 @@
+nameOverride: "staging"
+front:
+  ingress:
+    host: www-staging.loic-perrin.cpe.takima.school
+
+api:
+  ingress:
+    host: api-staging.loic-perrin.cpe.takima.school

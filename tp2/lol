@@ -1,0 +1,289 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  annotations:
+    checksum/config: f3bba7d4ce056a17b55f4313063ae64bb19449d37d112bb9de5beb652216ee37
+    checksum/config-sshd: 4d4720c8673c17b6544eb68244030a8f8ca192da18e229046a34b82ef694a8f7
+    cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
+    kubernetes.io/limit-ranger: 'LimitRanger plugin set: cpu, memory limit for container
+      gitlab-shell; memory request for init container certificates; cpu, memory limit
+      for init container certificates; memory request for init container configure;
+      cpu, memory limit for init container configure'
+  creationTimestamp: "2024-12-03T15:15:47Z"
+  generateName: gitlab-gitlab-shell-744b94fff9-
+  labels:
+    app: gitlab-shell
+    chart: gitlab-shell-8.6.1
+    heritage: Helm
+    pod-template-hash: 744b94fff9
+    release: gitlab
+  name: gitlab-gitlab-shell-744b94fff9-6rgfd
+  namespace: loic-perrin
+  ownerReferences:
+  - apiVersion: apps/v1
+    blockOwnerDeletion: true
+    controller: true
+    kind: ReplicaSet
+    name: gitlab-gitlab-shell-744b94fff9
+    uid: 0a6b4255-c1aa-4c6f-a3cd-4db2a8020552
+  resourceVersion: "1001225"
+  uid: 2a3052b7-6d6a-479d-9d0e-cac78e42a122
+spec:
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+      - podAffinityTerm:
+          labelSelector:
+            matchLabels:
+              app: gitlab-shell
+              release: gitlab
+          topologyKey: kubernetes.io/hostname
+        weight: 1
+  automountServiceAccountToken: false
+  containers:
+  - env:
+    - name: GITALY_FEATURE_DEFAULT_ON
+      value: "1"
+    - name: CONFIG_TEMPLATE_DIRECTORY
+      value: /etc/gitlab-shell
+    - name: CONFIG_DIRECTORY
+      value: /srv/gitlab-shell
+    - name: KEYS_DIRECTORY
+      value: /etc/gitlab-secrets/ssh
+    - name: SSH_DAEMON
+      value: openssh
+    image: registry.gitlab.com/gitlab-org/build/cng/gitlab-shell:v14.39.0
+    imagePullPolicy: IfNotPresent
+    livenessProbe:
+      exec:
+        command:
+        - /scripts/healthcheck
+      failureThreshold: 3
+      initialDelaySeconds: 10
+      periodSeconds: 10
+      successThreshold: 1
+      timeoutSeconds: 3
+    name: gitlab-shell
+    ports:
+    - containerPort: 2222
+      name: ssh
+      protocol: TCP
+    readinessProbe:
+      failureThreshold: 2
+      initialDelaySeconds: 10
+      periodSeconds: 5
+      successThreshold: 1
+      tcpSocket:
+        port: 2222
+      timeoutSeconds: 3
+    resources:
+      limits:
+        cpu: 300m
+        memory: 512Mi
+      requests:
+        cpu: "0"
+        memory: 6M
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+        - ALL
+      runAsNonRoot: true
+      runAsUser: 1000
+    terminationMessagePath: /dev/termination-log
+    terminationMessagePolicy: File
+    volumeMounts:
+    - mountPath: /etc/gitlab-shell
+      name: shell-config
+    - mountPath: /etc/gitlab-secrets
+      name: shell-secrets
+      readOnly: true
+    - mountPath: /etc/krb5.conf
+      name: shell-config
+      readOnly: true
+      subPath: krb5.conf
+    - mountPath: /etc/ssh/sshd_config
+      name: sshd-config
+      readOnly: true
+      subPath: sshd_config
+    - mountPath: /etc/ssl/certs/
+      name: etc-ssl-certs
+      readOnly: true
+    - mountPath: /etc/pki/ca-trust/extracted/pem
+      name: etc-pki-ca-trust-extracted-pem
+      readOnly: true
+  dnsPolicy: ClusterFirst
+  enableServiceLinks: true
+  initContainers:
+  - image: registry.gitlab.com/gitlab-org/build/cng/certificates:v17.6.1
+    imagePullPolicy: IfNotPresent
+    name: certificates
+    resources:
+      limits:
+        cpu: 300m
+        memory: 512Mi
+      requests:
+        cpu: 50m
+        memory: 64Mi
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+        - ALL
+      runAsNonRoot: true
+    terminationMessagePath: /dev/termination-log
+    terminationMessagePolicy: File
+    volumeMounts:
+    - mountPath: /etc/ssl/certs
+      name: etc-ssl-certs
+    - mountPath: /etc/pki/ca-trust/extracted/pem
+      name: etc-pki-ca-trust-extracted-pem
+  - command:
+    - sh
+    - /config/configure
+    image: registry.gitlab.com/gitlab-org/build/cng/gitlab-base:v17.6.1
+    imagePullPolicy: IfNotPresent
+    name: configure
+    resources:
+      limits:
+        cpu: 300m
+        memory: 512Mi
+      requests:
+        cpu: 50m
+        memory: 64Mi
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+        - ALL
+      runAsNonRoot: true
+    terminationMessagePath: /dev/termination-log
+    terminationMessagePolicy: File
+    volumeMounts:
+    - mountPath: /config
+      name: shell-config
+      readOnly: true
+    - mountPath: /init-config
+      name: shell-init-secrets
+      readOnly: true
+    - mountPath: /init-secrets
+      name: shell-secrets
+  nodeName: ip-10-60-43-167.eu-west-3.compute.internal
+  preemptionPolicy: PreemptLowerPriority
+  priority: 0
+  restartPolicy: Always
+  schedulerName: default-scheduler
+  securityContext:
+    fsGroup: 1000
+    runAsUser: 1000
+    seccompProfile:
+      type: RuntimeDefault
+  serviceAccount: default
+  serviceAccountName: default
+  terminationGracePeriodSeconds: 30
+  tolerations:
+  - effect: NoExecute
+    key: node.kubernetes.io/not-ready
+    operator: Exists
+    tolerationSeconds: 300
+  - effect: NoExecute
+    key: node.kubernetes.io/unreachable
+    operator: Exists
+    tolerationSeconds: 300
+  volumes:
+  - configMap:
+      defaultMode: 420
+      name: gitlab-gitlab-shell
+    name: shell-config
+  - configMap:
+      defaultMode: 420
+      name: gitlab-gitlab-shell-sshd
+    name: sshd-config
+  - name: shell-init-secrets
+    projected:
+      defaultMode: 288
+      sources:
+      - secret:
+          name: gitlab-gitlab-shell-host-keys
+      - secret:
+          items:
+          - key: secret
+            path: shell/.gitlab_shell_secret
+          name: gitlab-gitlab-shell-secret
+  - emptyDir:
+      medium: Memory
+    name: shell-secrets
+  - emptyDir:
+      medium: Memory
+    name: etc-ssl-certs
+  - emptyDir:
+      medium: Memory
+    name: etc-pki-ca-trust-extracted-pem
+status:
+  conditions:
+  - lastProbeTime: null
+    lastTransitionTime: "2024-12-03T15:15:55Z"
+    status: "True"
+    type: Initialized
+  - lastProbeTime: null
+    lastTransitionTime: "2024-12-03T15:16:07Z"
+    status: "True"
+    type: Ready
+  - lastProbeTime: null
+    lastTransitionTime: "2024-12-03T15:16:07Z"
+    status: "True"
+    type: ContainersReady
+  - lastProbeTime: null
+    lastTransitionTime: "2024-12-03T15:15:47Z"
+    status: "True"
+    type: PodScheduled
+  containerStatuses:
+  - containerID: containerd://8c659058032a771536ec56ce8df7bd1b19f6abf9a39d6a2c477105c43f2e5883
+    image: registry.gitlab.com/gitlab-org/build/cng/gitlab-shell:v14.39.0
+    imageID: registry.gitlab.com/gitlab-org/build/cng/gitlab-shell@sha256:d59fbc7598c5ad076227a4104ceb2dcfce394688f211afd346b825912ca61e58
+    lastState: {}
+    name: gitlab-shell
+    ready: true
+    restartCount: 0
+    started: true
+    state:
+      running:
+        startedAt: "2024-12-03T15:15:55Z"
+  hostIP: 10.60.43.167
+  initContainerStatuses:
+  - containerID: containerd://6d03d3bfa4788d20a03f57318b2b7ab37d184fca159557cc826818ccc5622247
+    image: registry.gitlab.com/gitlab-org/build/cng/certificates:v17.6.1
+    imageID: registry.gitlab.com/gitlab-org/build/cng/certificates@sha256:8288c46ca0a3546c9252ec16f775196516f01376d1e0d54624d7804d6e642e65
+    lastState: {}
+    name: certificates
+    ready: true
+    restartCount: 0
+    started: false
+    state:
+      terminated:
+        containerID: containerd://6d03d3bfa4788d20a03f57318b2b7ab37d184fca159557cc826818ccc5622247
+        exitCode: 0
+        finishedAt: "2024-12-03T15:15:53Z"
+        reason: Completed
+        startedAt: "2024-12-03T15:15:48Z"
+  - containerID: containerd://c783fbf65d93f2d65f439d314eed5c6858e2b0ab145e08de041a143f7ffc90f5
+    image: registry.gitlab.com/gitlab-org/build/cng/gitlab-base:v17.6.1
+    imageID: registry.gitlab.com/gitlab-org/build/cng/gitlab-base@sha256:2bb634da4ee72f9e410f18915fa13567c80a61008acbb1acbdd9a75657faad97
+    lastState: {}
+    name: configure
+    ready: true
+    restartCount: 0
+    started: false
+    state:
+      terminated:
+        containerID: containerd://c783fbf65d93f2d65f439d314eed5c6858e2b0ab145e08de041a143f7ffc90f5
+        exitCode: 0
+        finishedAt: "2024-12-03T15:15:54Z"
+        reason: Completed
+        startedAt: "2024-12-03T15:15:54Z"
+  phase: Running
+  podIP: 10.60.46.252
+  podIPs:
+  - ip: 10.60.46.252
+  qosClass: Burstable
+  startTime: "2024-12-03T15:15:47Z"

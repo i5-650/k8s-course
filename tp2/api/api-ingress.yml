@@ -1,0 +1,22 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+ name: api-ingress
+spec:
+ ingressClassName: nginx
+ rules:
+ - host: api.loic-perrin.cpe.takima.school 
+   http:
+     paths:
+     - backend:
+         service:
+           name: api-service
+           port:
+             number: 8080
+       path: /
+       pathType: Prefix
+ tls:
+ - hosts:
+   - api.loic-perrin.cpe.takima.school
+   secretName: app-wildcard 
+

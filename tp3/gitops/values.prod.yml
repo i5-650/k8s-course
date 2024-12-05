@@ -1,0 +1,9 @@
+nameOverride: "prod"
+
+front:
+  ingress:
+    host: www.loic-perrin.cpe.takima.school
+
+api:
+  ingress:
+    host: api.loic-perrin.cpe.takima.school

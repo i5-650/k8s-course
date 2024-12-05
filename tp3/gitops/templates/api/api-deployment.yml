@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "chart.fullname" . }}-api
+  labels:
+    app: {{ include "chart.name" . }}-api
+spec:
+  selector:
+    matchLabels:
+      app: {{ include "chart.name" . }}-api
+  template:
+    metadata:
+      labels:
+        app: {{ include "chart.name" . }}-api
+    spec:
+      securityContext:
+        fsGroup: {{ .Values.api.securityContext.fsGroup}}
+      containers:
+        - name: {{ include "chart.name" . }}-api
+          image: {{ .Values.api.image.repository }}:{{ .Values.api.image.tag }}
+          env:
+            - name: DB_ENDPOINT
+              value: {{ include "chart.name" . }}-{{ .Values.pg.db.name }}.{{ .Values.global.namespace}}:5432
+            - name: POSTGRES_DB
+              value: {{ .Values.pg.db.name}}
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: postgres.{{ include "chart.name" . }}-{{ .Values.pg.db.name }}.credentials.postgresql.acid.zalan.do
+                  key: username
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres.{{ include "chart.name" . }}-{{ .Values.pg.db.name }}.credentials.postgresql.acid.zalan.do
+                  key: password
+          ports:
+            - containerPort: {{ .Values.api.service.port}}
+          securityContext:
+            runAsUser: {{ .Values.api.securityContext.runAsUser}}
+            runAsGroup: {{ .Values.api.securityContext.runAsUser}}
+            allowPrivilegeEscalation: false
+          resources:
+            requests:
+              memory: {{ .Values.api.resources.requests.memory }}
+              cpu: {{ .Values.api.resources.requests.cpu }}
+            limits:
+              memory: {{ .Values.api.resources.limits.memory }}
+              cpu: {{ .Values.api.resources.limits.cpu }}
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.api.livenessProbe.path }}
+              port: {{ .Values.api.livenessProbe.port }}
+            initialDelaySeconds: {{ .Values.api.livenessProbe.initialDelaySeconds}}
+            periodSeconds: {{ .Values.api.livenessProbe.periodSeconds}}
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.api.readinessProbe.path }}
+              port: {{ .Values.api.readinessProbe.port }}
+            initialDelaySeconds: {{ .Values.api.readinessProbe.initialDelaySeconds}}
+            periodSeconds: {{ .Values.api.readinessProbe.periodSeconds}}
+      imagePullSecrets:
+      - name: takima-school-registry

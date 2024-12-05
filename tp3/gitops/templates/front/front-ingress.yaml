@@ -1,0 +1,25 @@
+{{- if .Values.front.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+ name: {{ include "chart.name" . }}-front
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: {{ .Values.front.ingress.host }}
+    http:
+      paths:
+      - backend:
+          service:
+            name: {{ include "chart.name" . }}-front
+            port:
+              number: 80
+        path: /
+        pathType: Prefix
+  {{- if .Values.front.ingress.tlsEnabled }}
+  tls:
+  - hosts:
+      - {{ .Values.front.ingress.host }}
+    secretName: app-wildcard
+  {{- end }}
+{{- end }}

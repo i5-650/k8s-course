@@ -1,0 +1,23 @@
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+ name: front-ingress
+spec:
+ ingressClassName: nginx
+ rules:
+ - host: front.loic-perrin.cpe.takima.school 
+   http:
+     paths:
+     - backend:
+         service:
+           name: front-service
+           port:
+             number: 8080
+       path: /
+       pathType: Prefix
+ tls:
+ - hosts:
+   - front.loic-perrin.cpe.takima.school
+   secretName: app-wildcard 
+

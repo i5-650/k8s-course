@@ -1,0 +1,26 @@
+{{- if .Values.pg.enabled }}
+apiVersion: "acid.zalan.do/v1"
+kind: postgresql
+metadata:
+  name: {{ include "chart.name" . }}-cdb
+spec:
+  enableLogicalBackup: true
+  logicalBackupSchedule: 30 00 * * *
+  teamId: {{ .Values.pg.teamId }}  # le team id doit matcher le préfixe dans le metadata.name, ici formation
+  volume:
+    size: {{ .Values.pg.volume.size }}
+  numberOfInstances: {{ .Values.pg.numberOfInstances }}
+  users:
+    {{- range $user, $roles := .Values.pg.users }}
+    {{ $user }}:
+      {{- range $roles }}
+      - {{ . }}
+      {{- end }}
+    {{- end }}
+  databases:
+    {{- range $db, $owner := .Values.pg.databases }}
+    {{ $db }}: {{ $owner }}
+    {{- end }}
+  postgresql:
+    version: "14"
+{{- end }}

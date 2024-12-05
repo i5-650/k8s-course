@@ -1,0 +1,58 @@
+global:
+  hpa:
+    enable: false
+  serviceAccount:
+    create: false
+  rbac: 
+    create: false
+  hosts:
+    domain: loic-perrin.cpe.takima.school
+  ingress:
+    configureCertmanager: false
+    path: /
+    pathType: Prefix
+    provider: nginx
+    nginx:
+      enabled: false
+    tls:
+      enabled: false
+  storage:
+    persistentVolumes:
+      enabled: true
+certmanager:
+  installCRDs: false 
+  install: false
+  rbac:
+    create: false
+nginx-ingress: 
+  enabled: false 
+  service:
+    ingressClassByName: false
+prometheus:
+  install: false  
+  rbac:
+    create: false
+redis:
+  rbac:
+    create: false
+  serviceAccount:
+    create: false
+gitlab:
+  webservice:
+    resources:
+      requests:
+        cpu: 500m
+        memory: 1Gi
+      limits:
+        cpu: 1000m
+        memory: 2Gi
+gitlab-runner:
+  rbac:
+    create: false
+shared-secrets:
+  enable: true
+  rbac:
+    create: false
+  serviceAccount:
+    enable: false
+    create: false
