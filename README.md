@@ -45,6 +45,7 @@ For instance, my deployment would need to have my `label` set to `app: app-postg
 **Q:** Where do we define what ports are exposed and what do we define ?
 
 **A:** Just like in a `docker-compose.yml`, you can define a `targetPort` and a `port`.
+`targetPort` is the port on the pods while `port` is the port on the service.
 Other pods will use the `port` to connect with our pods.
 
 ---
@@ -52,6 +53,10 @@ Other pods will use the `port` to connect with our pods.
 
 **A:** We use an `ingress` ! In this class, we used the `IngressClassName: nginx`.
 You can use different `Ingressclass` without any conflicts.
+
+> Note: You need the corresponding IngressClass controller defined in your cluster.
+> Note: with some specific cases, you can have conflicts.
+e.g: nodePort instead of LoadBalancer and with the annotations.
 
 ---
 
@@ -68,11 +73,15 @@ Example: app-postgres-service for the selector and `5432` for the port.
 **Q:** What if an API want to access a database ?
 
 **A:** Unless you want to publicly expose your database, you won't need an Ingress.
+You have to define a service and a ConfigMap.
 So, we define the `DB_URL` which will be composed of the service's name and the port.
-Example: `app-postgres-service.mydomain.com:5432`.
+Example: `app-postgres-service.namespace:5432`.
+All pods won't need to acces the database.
+So, only those who access the database will have it.
 
 > Note: This works because there is a sort of internal DNS in k8s.
-> In our class, we used the Container Network Interface: [Calico](https://docs.tigera.io/calico/latest/about/).
+It allows pods to resolve names.
+> Note: In our class, we used the Container Network Interface: [Calico](https://docs.tigera.io/calico/latest/about/).
 
 ---
 If we want to exchange between namespaces: we indicate the namespace.
@@ -117,14 +126,16 @@ spec:
 There are deployments but there are also:
 
 - Statefulset: to have a Persistent Volume Claim (PVC).
+It works for other things, but mainly for PVC.
 - DaemonSet: to have a pod on every node. (e.g. For observability with [Prometheus](https://prometheus.io))
 
 ---
 
 ## Operator
 
-An operator is a Custom Resources Definition (CRD).
-It means that you crate your own `kind`.
+An operator allow you to handle Custom Resources Definition (CRD).
+It's a sort of adapter. It's an extension.
+It means that you crate your own `kind` with the CRD.
 It also means that you have your own controller for that resource
 
 ---
@@ -139,9 +150,10 @@ In order to have persistence, you need one of those:
 
 Volume have access modes:
 
-- ReadOnly: ...
-- ReadWriteOnce: Only on pod can read and write.
-- ReadWriteMany: Many pods can read and write.
+- ReadOnlyMany: ...
+- ReadWriteOncePod: only one **pod** can read and write.
+- ReadWriteOnce: Only one **node** can read and write.
+- ReadWriteMany: Many **nodes** can read and write.
 
 ---
 
@@ -153,6 +165,7 @@ Helm has two modes:
 
 - templating: you want to deploy your apps, only for you.
 So you have a few values and the rest is hard coded.
+E.g: you can deploy in production and in pre-prod.
 - packaging: you want to distribute your software.
 You put into variable as much as you can.
 
@@ -165,6 +178,9 @@ You put into variable as much as you can.
 **Q:** How do I test my helm configuration ?
 
 **A:** You can use the `helm template` command.
+And you have the `--dry-run --debug` options to  do a dry-run.
+
+> Note: `helm lint` is useful to lint and verify your chart.
 
 ---
 
@@ -181,10 +197,14 @@ Argo is part of the GitOps field and work in pull mode.
 **A:** We create an application from a repository.
 This repository must have a helm chart and all the values.
 
+> Note: you can define your values in Argo rather than in the repository.
+
 ---
 **Q:** What does Argo do ?
 
-**A:** Argo sync the git with the infra. The infrastructure must match the git.
+**A:** Argo sync the application sources with the infra.
+The infrastructure must match the sources.
+Argo will only sync the differences.
 There is two way to sync those:
 
 - autosync: each git change trigger a sync. 1 commit = 1 deployment.
@@ -229,12 +249,13 @@ Therefore, to an AZ.
 - declarative: you create YAML that you send to the API.
 - imperative: you use commands to create the resources.
 
-> Note: The controller node also has :
+> Note: The controller node also has:
 
 - the [ETCD](https://etcd.io) database.
 - the scheduler.
 - the controller manager (which has the cloud controller).
 
+> Those components can be on different machines and not on the controller node.
 > Note: The declarative way is the most common one.
 
 ---
@@ -266,7 +287,7 @@ Therefore, to an AZ.
 **Q:** How do we handle application configuration ?
 
 **A:** We have two options: `ConfigMap` and `Secret`.
-They both are environment variable that are injected in the pods.
+They both are environment variable or as a file that are injected in the pods.
 However, `Secret` are hidden / encrypted on most K8S distribution except on Vanilla.
 > Note: If the pods don't refresh its environment variable:
 you need to do it yourself with `annotations`
@@ -294,8 +315,11 @@ It increase the number of pods to scale horizontaly.
 ---
 **Q:** How to monitor your cluster ?
 
-**A:** You can use [Prometheus](https://prometheus.io) to harvest data.
+**A:** One solution is to use [Prometheus](https://prometheus.io) to harvest data.
 Then use [Grafana](https://grafana.com) to have dashboards.
+
+> Note: Some distribution already have a monitoring tools.
+> Note: alternatively, you have eBPF to harvest data.
 
 ---
 **Q:** What are the update strategy in a deployment ?
